@@ -1,0 +1,42 @@
+- name: install Java 1.7 and some basic packages
+  sudo: yes
+  yum: name={{ item }} state=present
+  with_items:
+   - unzip
+   - java-1.7.0-openjdk-devel.x86_64
+   - git
+
+- name: download maven
+  get_url: url=http://mirrors.gigenet.com/apache/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz dest=/tmp
+
+- name: extract the maven download
+  sudo: yes
+  shell: cd /tmp && tar -zxvf apache-maven-3.0.5-bin.tar.gz -C /opt/
+  
+- name: Copy maven variable definitions
+  sudo: yes
+  copy: src=maven.sh dest=/etc/profile.d/
+
+- name: git clone the opendaylight controller
+  sudo: yes
+  git: repo=http://git.opendaylight.org/gerrit/p/controller.git dest=/opendaylight/
+
+- name: load env variables and run maven build of opendaylight
+  sudo: yes
+  environment:
+          JAVA_HOME: /usr/lib/jvm/java-1.7.0-openjdk/
+  shell: source /etc/profile.d/maven.sh && cd /opendaylight/opendaylight/distribution/opendaylight && mvn clean install
+
+- name: run controller startup script
+  sudo: yes
+  environment:
+          JAVA_HOME: /usr/lib/jvm/java-1.7.0-openjdk/
+  shell: cd /opendaylight/opendaylight/distribution/opendaylight/target/distribution.opendaylight-osgipackage/opendaylight/ && ./run.sh &
+
+
+
+
+  
+ 
+  
+  
